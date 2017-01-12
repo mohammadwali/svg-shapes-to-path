@@ -22,9 +22,15 @@
   },
   "homepage": "https://github.com/mohammadwali/svg-shapes-to-path#readme",
   "bin": {
-    "svgShapesToPath": "./src/index.js"
+    "svgShapesToPath": "./bin/index.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "async": "^2.1.4",
+    "cli-error": "^0.5.7",
+    "commander": "^2.9.0",
+    "glob": "^7.1.1",
+    "svgo": "^0.7.1"
+  },
   "devDependencies": {},
   "author": "",
   "license": "MIT"
