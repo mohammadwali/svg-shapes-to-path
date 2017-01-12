@@ -22,79 +22,96 @@ program
 program
     .command(config.commandOptions.convert.trigger)
     .description(config.commandOptions.convert.description)
-    .action(function (dir, options) {
-        var convertedFiles = 0;
-
-        // options is optional
-        glob(path.join(dir, config.paths.svgBlob), onGlobMatch);
-
-
-        function onGlobMatch(err, files) {
-            var series = [];
-            var numFiles = files.length;
-
-
-            if (!err) {
-                if (numFiles) {
-                    console.log(config.messages.found, numFiles, ( numFiles > 0 ) ? "s" : "");
-
-
-                    files.forEach(function (file) {
-                        series.push(function (callback) {
-                            var fileName = path.basename(file);
-                            var fileContent = fs.readFileSync(file, "utf8");
-
-                            svgo.optimize(fileContent, function (result) {
-
-                                if (!result.error) {
-                                    var dataFile = replaceExt(file, ".json");
-                                    var dataFileName = path.basename(dataFile);
-                                    var paths = [];
-                                    var $ = cheerio.load(result.data);
-
-                                    $("path[d]").each(function () {
-                                        paths.push({
-                                            path: $(this).attr("d")
-                                        });
-                                    });
-
-
-                                    fs.writeFileSync(dataFile, JSON.stringify(paths));
-
-                                    console.log(config.messages.saved, fileName, dataFileName);
-
-                                    convertedFiles++;
-                                }
-
-                                callback(result.error || null, {
-                                    result: result,
-                                    file: file
-                                });
-                            })
-
-                        });
-                    });
-
-
-                    async.series(series, function (err, output) {
-                        if (convertedFiles > 0) {
-                            console.log(config.messages.completed, convertedFiles, files.length);
-                        }
-                    });
-
-                }
-            }
-
-            if (files.length === 0) {
-                throwError(config.errors.noFileFound, 128, [dir]).exit();
-            }
-        }
-    });
+    .action(convertSvg);
 
 
 //sending arguments
 program
     .parse(process.argv);
+
+
+
+
+
+////////////////////////////
+function convertSvg(dir, options) {
+    var convertedFiles = 0;
+
+
+    glob(path.join(dir, config.paths.svgBlob), onGlobMatch);
+
+
+    function onGlobMatch(err, files) {
+        var series = [];
+        var numFiles = files.length;
+
+        if (!err && numFiles) {
+            console.log(config.messages.found, numFiles, ( numFiles > 0 ) ? "s" : "");
+
+            files.forEach(convertFilesForSeries);
+
+            async.series(series, onDone);
+
+        } else {
+            throwError(config.errors.noFileFound, 128, [dir]).exit();
+        }
+
+        function convertFilesForSeries(file) {
+
+            series.push(seriesFn);
+
+            function seriesFn(callback) {
+                var fileContent = fs.readFileSync(file, "utf8");
+
+                svgo.optimize(fileContent, onOptimizeDone);
+
+
+                function onOptimizeDone(result) {
+                    if (!result.error) {
+                        extractAndWritePaths(file, result.data);
+
+                        convertedFiles++;
+                    }
+
+                    callback(result.error || null, {
+                        result: result,
+                        file: file
+                    });
+                }
+            }
+        }
+
+
+        function onDone(err, output) {
+            if (convertedFiles > 0) {
+                console.log(config.messages.completed, convertedFiles, files.length);
+            }
+        }
+    }
+
+}
+
+
+function extractAndWritePaths(file, svgData) {
+    var paths = [];
+    var $ = cheerio.load(svgData);
+    var fileName = path.basename(file);
+    var dataFile = replaceExt(file, ".json");
+    var dataFileName = path.basename(dataFile);
+
+    $("path[d]").each(function () {
+        paths.push({
+            path: $(this).attr("d")
+        });
+    });
+
+    fs.writeFileSync(dataFile, JSON.stringify(paths));
+
+    console.log(config.messages.saved, fileName, dataFileName);
+
+    return paths;
+}
+
 
 function throwError(message, code, parameters, name) {
     var err = new clierr.CliError(message, code, parameters, name);
