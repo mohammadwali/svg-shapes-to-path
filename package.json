@@ -1,0 +1,31 @@
+{
+  "name": "svg-shapes-to-path",
+  "version": "1.0.0",
+  "description": "Optimizes svg(s) and convert them into path elements",
+  "keywords": [
+    "svgo",
+    "svg",
+    "optimize",
+    "minify",
+    "path"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohammadwali/svg-shapes-to-path.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohammadwali/svg-shapes-to-path/issues"
+  },
+  "homepage": "https://github.com/mohammadwali/svg-shapes-to-path#readme",
+  "bin": {
+    "svgShapesToPath": "./src/index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT"
+}
