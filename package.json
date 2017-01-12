@@ -29,7 +29,9 @@
     "cli-error": "^0.5.7",
     "commander": "^2.9.0",
     "glob": "^7.1.1",
-    "svgo": "^0.7.1"
+    "svgo": "^0.7.1",
+    "replace-ext": "latest",
+    "cheerio": "latest"
   },
   "devDependencies": {},
   "author": "",

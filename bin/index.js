@@ -1,5 +1,6 @@
 #!/usr/bin/env node --harmony
 
+var config = require("../config");
 var program = require("commander");
 var glob = require("glob");
 var SVGO = require("svgo");
@@ -7,53 +8,60 @@ var path = require("path");
 var fs = require("fs");
 var clierr = require("cli-error");
 var async = require("async");
-
-
-var svgo = new SVGO({
-    multipass: true,
-    pretty: true,
-    precision: 2,
-    full: true,
-    plugins: [{"cleanupAttrs": true}, {"cleanupEnableBackground": true}, {"cleanupIDs": true}, {"cleanupListOfValues": true}, {"cleanupNumericValues": true}, {"collapseGroups": true}, {"convertColors": true}, {"convertPathData": true}, {"convertShapeToPath": true}, {"convertStyleToAttrs": true}, {"convertTransform": true}, {"moveElemsAttrsToGroup": true}, {"moveGroupAttrsToElems": true}, {"removeComments": true}, {"removeDesc": true}, {"removeDimensions": true}, {"removeDoctype": true}, {"removeEditorsNSData": true}, {"removeEmptyAttrs": true}, {"removeEmptyContainers": true}, {"removeEmptyText": true}, {"removeHiddenElems": true}, {"removeMetadata": true}, {"removeNonInheritableGroupAttrs": true}, {"removeRasterImages": true}, {"removeTitle": true}, {"removeUnknownsAndDefaults": true}, {"removeUselessDefs": true}, {"removeUnusedNS": true}, {"removeUselessStrokeAndFill": true}, {"removeXMLProcInst": true}, {"sortAttrs": true}, {"transformsWithOnePath": true}]
-});
+var cheerio = require("cheerio");
+var replaceExt = require("replace-ext");
+var svgo = new SVGO();
 
 
 //setting up the version
 program
-    .version("1.0.0", "-V, --version");
+    .version(config.version, config.commandOptions.version);
 
 
 //adding the command to convert the svg files
 program
-    .command("convert <dir>")
-    .description("Convert the svg files shapes into path elements")
+    .command(config.commandOptions.convert.trigger)
+    .description(config.commandOptions.convert.description)
     .action(function (dir, options) {
         var convertedFiles = 0;
 
         // options is optional
-        glob(path.join(dir, "**/*.svg"), onGlobMatch);
+        glob(path.join(dir, config.paths.svgBlob), onGlobMatch);
 
 
         function onGlobMatch(err, files) {
             var series = [];
+            var numFiles = files.length;
 
 
             if (!err) {
-                if (files.length) {
-                    console.log(files);
+                if (numFiles) {
+                    console.log(config.messages.found, numFiles, ( numFiles > 0 ) ? "s" : "");
 
 
                     files.forEach(function (file) {
                         series.push(function (callback) {
+                            var fileName = path.basename(file);
                             var fileContent = fs.readFileSync(file, "utf8");
 
                             svgo.optimize(fileContent, function (result) {
 
                                 if (!result.error) {
+                                    var dataFile = replaceExt(file, ".json");
+                                    var dataFileName = path.basename(dataFile);
+                                    var paths = [];
+                                    var $ = cheerio.load(result.data);
 
-                                    fs.writeFileSync(
-                                        path.join(path.dirname(file), path.basename(file) + "_test.svg"), result.data
-                                    );
+                                    $("path[d]").each(function () {
+                                        paths.push({
+                                            path: $(this).attr("d")
+                                        });
+                                    });
+
+
+                                    fs.writeFileSync(dataFile, JSON.stringify(paths));
+
+                                    console.log(config.messages.saved, fileName, dataFileName);
 
                                     convertedFiles++;
                                 }
@@ -69,10 +77,8 @@ program
 
 
                     async.series(series, function (err, output) {
-                        console.log(err, output[0].result);
-
                         if (convertedFiles > 0) {
-                            console.log("Converted %s of %s files", convertedFiles, files.length);
+                            console.log(config.messages.completed, convertedFiles, files.length);
                         }
                     });
 
@@ -80,7 +86,7 @@ program
             }
 
             if (files.length === 0) {
-                return throwError('fatal: No svg file(s) were found in the given dir %s', 128, [dir]).exit();
+                throwError(config.errors.noFileFound, 128, [dir]).exit();
             }
         }
     });
@@ -89,7 +95,6 @@ program
 //sending arguments
 program
     .parse(process.argv);
-
 
 function throwError(message, code, parameters, name) {
     var err = new clierr.CliError(message, code, parameters, name);
