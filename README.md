@@ -1,6 +1,6 @@
 # SVG shapes to path
 
-CLI tool build to manipulate multiple svg files, it optimizes and compresses the svg file and converts all the shapes to a path element using [SVGO](https://github.com/svg/svgo), when done it creates a json file with the converted path data.
+CLI tool build to manipulate multiple svg files, it optimizes and compresses the svg file and converts all the shapes to path elements using [SVGO](https://github.com/svg/svgo), when done it creates a json file with the converted path data.
 
 
 ### Installing
