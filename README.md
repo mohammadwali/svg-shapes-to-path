@@ -14,3 +14,9 @@ $ npm i mohammadwali/svg-shapes-to-path -g
 ```shell
 $ svgShapesToPath convert ./mySvgFilesRoot
 ```
+
+### Converting Single file
+
+```shell
+$ svgShapesToPath convert ./myfile.svg -f
+```
