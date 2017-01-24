@@ -21,6 +21,7 @@ program
 //adding the command to convert the svg files
 program
     .command(config.commandOptions.convert.trigger)
+    .option("-f, --isFile", "When need to convert only an svg file")
     .description(config.commandOptions.convert.description)
     .action(convertSvg);
 
@@ -30,16 +31,12 @@ program
     .parse(process.argv);
 
 
-
-
-
 ////////////////////////////
 function convertSvg(dir, options) {
     var convertedFiles = 0;
+    var globSrc = options.isFile ? dir : path.join(dir, config.paths.svgBlob);
 
-
-    glob(path.join(dir, config.paths.svgBlob), onGlobMatch);
-
+    glob(globSrc, onGlobMatch);
 
     function onGlobMatch(err, files) {
         var series = [];
