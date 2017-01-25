@@ -10,7 +10,7 @@ var clierr = require("cli-error");
 var async = require("async");
 var cheerio = require("cheerio");
 var replaceExt = require("replace-ext");
-var svgo = new SVGO();
+var svgo = new SVGO(config.svgo);
 
 
 //setting up the version
